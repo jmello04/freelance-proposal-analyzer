@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Freelance Proposal Analyzer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:'#eff6ff',100:'#dbeafe',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a' },
+          },
+          animation: { 'fade-in': 'fadeIn 0.4s ease-out', 'slide-up': 'slideUp 0.4s ease-out' },
+          keyframes: {
+            fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+            slideUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    .tag-tech { @apply inline-flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full; }
+    .card { @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6; }
+    .badge-baixa    { @apply bg-emerald-100 text-emerald-800; }
+    .badge-media    { @apply bg-yellow-100  text-yellow-800; }
+    .badge-alta     { @apply bg-orange-100  text-orange-800; }
+    .badge-muito_alta { @apply bg-red-100   text-red-800; }
+    .input-field { @apply w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all duration-200; }
+    .btn-primary { @apply inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200; }
+    .btn-secondary { @apply inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200; }
+    .list-item-risk    { @apply flex items-start gap-3 rounded-lg bg-orange-50 border border-orange-100 p-3 text-sm text-orange-900; }
+    .list-item-redflag { @apply flex items-start gap-3 rounded-lg bg-red-50 border border-red-100 p-3 text-sm text-red-900; }
+    .list-item-question{ @apply flex items-start gap-3 rounded-lg bg-blue-50 border border-blue-100 p-3 text-sm text-blue-900; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #f1f5f9; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 font-sans antialiased">
+
+  <!-- HEADER -->
+  <header class="sticky top-0 z-50 border-b border-white/60 bg-white/80 backdrop-blur-xl">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+      <div class="flex items-center gap-3">
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-md">
+          <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-base font-bold text-gray-900">Freelance Proposal Analyzer</h1>
+          <p class="text-xs text-gray-500">Análise técnica de propostas</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="mostrarSecao('form')" id="tab-form"
+          class="rounded-lg px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 transition-all duration-200">
+          Nova Análise
+        </button>
+        <button onclick="mostrarSecao('historico')" id="tab-historico"
+          class="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 transition-all duration-200">
+          Histórico
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-6 py-10">
+
+    <!-- ═══════════════════════════════ SEÇÃO: FORMULÁRIO ═══════════════════════════════ -->
+    <section id="secao-form" class="animate-fade-in">
+      <div class="mb-8 text-center">
+        <h2 class="text-3xl font-bold tracking-tight text-gray-900">Analisar Nova Proposta</h2>
+        <p class="mt-2 text-gray-500">Preencha os dados da proposta e receba uma análise técnica detalhada em segundos.</p>
+      </div>
+
+      <div class="grid gap-8 lg:grid-cols-5">
+        <!-- Formulário -->
+        <div class="lg:col-span-3">
+          <div class="card">
+            <form id="form-proposta" onsubmit="enviarAnalise(event)" class="space-y-6">
+
+              <div>
+                <label class="mb-1.5 block text-sm font-semibold text-gray-700">Título do Projeto <span class="text-red-400">*</span></label>
+                <input id="titulo" type="text" class="input-field" placeholder="Ex: Sistema de gestão financeira para MEI" required minlength="5" maxlength="200" />
+              </div>
+
+              <div>
+                <label class="mb-1.5 block text-sm font-semibold text-gray-700">Descrição Completa <span class="text-red-400">*</span></label>
+                <textarea id="descricao" rows="6" class="input-field resize-none" placeholder="Cole aqui a descrição que o cliente enviou. Quanto mais detalhes, mais precisa será a análise." required minlength="20"></textarea>
+                <p class="mt-1 text-right text-xs text-gray-400" id="char-count">0 caracteres</p>
+              </div>
+
+              <div class="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label class="mb-1.5 block text-sm font-semibold text-gray-700">Prazo do Cliente <span class="text-red-400">*</span></label>
+                  <input id="prazo" type="text" class="input-field" placeholder="Ex: 2 meses, 45 dias" required />
+                </div>
+                <div>
+                  <label class="mb-1.5 block text-sm font-semibold text-gray-700">Valor Hora (R$) <span class="text-red-400">*</span></label>
+                  <input id="valor-hora" type="number" class="input-field" placeholder="Ex: 80" min="1" step="0.01" required />
+                </div>
+              </div>
+
+              <div>
+                <label class="mb-1.5 block text-sm font-semibold text-gray-700">Tecnologias Mencionadas <span class="text-red-400">*</span></label>
+                <div class="flex gap-2">
+                  <input id="input-tech" type="text" class="input-field" placeholder="Digite e pressione Enter ou vírgula" onkeydown="adicionarTecnologia(event)" />
+                  <button type="button" onclick="adicionarTecnologiaBtn()" class="btn-secondary shrink-0">Adicionar</button>
+                </div>
+                <div id="tags-tech" class="mt-2 flex flex-wrap gap-2"></div>
+                <input type="hidden" id="tecnologias-hidden" />
+              </div>
+
+              <div>
+                <label class="mb-1.5 block text-sm font-semibold text-gray-700">Seu Nível de Experiência <span class="text-red-400">*</span></label>
+                <div class="grid grid-cols-3 gap-3">
+                  <label class="nivel-option cursor-pointer">
+                    <input type="radio" name="nivel" value="junior" class="sr-only" />
+                    <div class="flex flex-col items-center rounded-xl border-2 border-gray-200 p-3 text-center transition-all duration-200 hover:border-blue-300">
+                      <span class="text-xl">🌱</span>
+                      <span class="mt-1 text-sm font-medium text-gray-700">Júnior</span>
+                    </div>
+                  </label>
+                  <label class="nivel-option cursor-pointer">
+                    <input type="radio" name="nivel" value="pleno" class="sr-only" checked />
+                    <div class="flex flex-col items-center rounded-xl border-2 border-blue-500 bg-blue-50 p-3 text-center transition-all duration-200">
+                      <span class="text-xl">⚡</span>
+                      <span class="mt-1 text-sm font-medium text-blue-700">Pleno</span>
+                    </div>
+                  </label>
+                  <label class="nivel-option cursor-pointer">
+                    <input type="radio" name="nivel" value="senior" class="sr-only" />
+                    <div class="flex flex-col items-center rounded-xl border-2 border-gray-200 p-3 text-center transition-all duration-200 hover:border-blue-300">
+                      <span class="text-xl">🚀</span>
+                      <span class="mt-1 text-sm font-medium text-gray-700">Sênior</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <button type="submit" id="btn-analisar" class="btn-primary w-full py-3.5 text-base">
+                <svg id="icon-submit" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.347.347a3.001 3.001 0 00-.836 1.57l-.14.828A2 2 0 0116 20h-3.333a2 2 0 01-1.97-1.671l-.14-.828a3.001 3.001 0 00-.836-1.57L8.343 15.9z" />
+                </svg>
+                <span id="texto-btn">Analisar Proposta</span>
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Dicas laterais -->
+        <div class="lg:col-span-2 space-y-4">
+          <div class="card border-l-4 border-l-blue-500">
+            <h3 class="mb-3 flex items-center gap-2 font-semibold text-gray-900">
+              <svg class="h-4 w-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              Como obter a melhor análise
+            </h3>
+            <ul class="space-y-2 text-sm text-gray-600">
+              <li class="flex items-start gap-2"><span class="mt-0.5 text-blue-500">•</span>Cole a descrição original do cliente sem filtros</li>
+              <li class="flex items-start gap-2"><span class="mt-0.5 text-blue-500">•</span>Inclua todas as tecnologias mencionadas</li>
+              <li class="flex items-start gap-2"><span class="mt-0.5 text-blue-500">•</span>Informe o prazo exato que o cliente pediu</li>
+              <li class="flex items-start gap-2"><span class="mt-0.5 text-blue-500">•</span>Use seu valor hora real de mercado</li>
+              <li class="flex items-start gap-2"><span class="mt-0.5 text-blue-500">•</span>Escolha seu nível honestamente</li>
+            </ul>
+          </div>
+          <div class="card border-l-4 border-l-emerald-500">
+            <h3 class="mb-3 flex items-center gap-2 font-semibold text-gray-900">
+              <svg class="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              O que você recebe
+            </h3>
+            <ul class="space-y-2 text-sm text-gray-600">
+              <li class="flex items-start gap-2"><span class="mt-0.5 text-emerald-500">✓</span>Resumo técnico do escopo</li>
+              <li class="flex items-start gap-2"><span class="mt-0.5 text-emerald-500">✓</span>Estimativa de horas (mín/máx)</li>
+              <li class="flex items-start gap-2"><span class="mt-0.5 text-emerald-500">✓</span>Sugestão de precificação em BRL</li>
+              <li class="flex items-start gap-2"><span class="mt-0.5 text-emerald-500">✓</span>Riscos e pontos de atenção</li>
+              <li class="flex items-start gap-2"><span class="mt-0.5 text-emerald-500">✓</span>Perguntas para o cliente</li>
+              <li class="flex items-start gap-2"><span class="mt-0.5 text-emerald-500">✓</span>Recomendação final clara</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resultado -->
+      <div id="resultado" class="mt-10 hidden animate-slide-up"></div>
+    </section>
+
+    <!-- ═══════════════════════════════ SEÇÃO: HISTÓRICO ═══════════════════════════════ -->
+    <section id="secao-historico" class="hidden animate-fade-in">
+      <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 class="text-3xl font-bold tracking-tight text-gray-900">Histórico de Análises</h2>
+          <p class="mt-1 text-gray-500">Consulte e filtre todas as propostas analisadas anteriormente.</p>
+        </div>
+        <button onclick="carregarHistorico()" class="btn-secondary gap-2">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+          Atualizar
+        </button>
+      </div>
+
+      <!-- Filtros -->
+      <div class="card mb-6">
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div>
+            <label class="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500">Complexidade</label>
+            <select id="filtro-complexidade" class="input-field py-2">
+              <option value="">Todas</option>
+              <option value="baixa">Baixa</option>
+              <option value="media">Média</option>
+              <option value="alta">Alta</option>
+              <option value="muito_alta">Muito Alta</option>
+            </select>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500">Data Início</label>
+            <input type="date" id="filtro-data-inicio" class="input-field py-2" />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500">Data Fim</label>
+            <input type="date" id="filtro-data-fim" class="input-field py-2" />
+          </div>
+          <div class="flex items-end">
+            <button onclick="carregarHistorico()" class="btn-primary w-full py-2">
+              Filtrar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="lista-historico" class="space-y-3">
+        <div class="flex items-center justify-center py-16 text-gray-400">
+          <div class="text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <p class="mt-2 text-sm">Nenhuma análise ainda</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL DE DETALHE -->
+  <div id="modal-overlay" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div id="modal-content" class="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl animate-slide-up">
+    </div>
+  </div>
+
+  <script>
+    const techs = new Set();
+
+    // ═══════════════ NAVEGAÇÃO ═══════════════
+    function mostrarSecao(secao) {
+      document.getElementById('secao-form').classList.toggle('hidden', secao !== 'form');
+      document.getElementById('secao-historico').classList.toggle('hidden', secao !== 'historico');
+      document.getElementById('tab-form').className = secao === 'form'
+        ? 'rounded-lg px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 transition-all duration-200'
+        : 'rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 transition-all duration-200';
+      document.getElementById('tab-historico').className = secao === 'historico'
+        ? 'rounded-lg px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 transition-all duration-200'
+        : 'rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 transition-all duration-200';
+      if (secao === 'historico') carregarHistorico();
+    }
+
+    // ═══════════════ TECNOLOGIAS ═══════════════
+    document.getElementById('descricao').addEventListener('input', function() {
+      document.getElementById('char-count').textContent = this.value.length + ' caracteres';
+    });
+
+    function adicionarTecnologia(e) {
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        adicionarTecnologiaBtn();
+      }
+    }
+
+    function adicionarTecnologiaBtn() {
+      const input = document.getElementById('input-tech');
+      const valor = input.value.trim().replace(/,$/, '');
+      if (!valor || techs.has(valor)) { input.value = ''; return; }
+      techs.add(valor);
+      renderizarTags();
+      input.value = '';
+      atualizarHidden();
+    }
+
+    function removerTech(tech) {
+      techs.delete(tech);
+      renderizarTags();
+      atualizarHidden();
+    }
+
+    function renderizarTags() {
+      const container = document.getElementById('tags-tech');
+      container.innerHTML = [...techs].map(t => `
+        <span class="tag-tech gap-1.5">
+          ${escapeHtml(t)}
+          <button type="button" onclick="removerTech('${escapeHtml(t)}')" class="ml-1 text-blue-500 hover:text-blue-700 font-bold leading-none">×</button>
+        </span>
+      `).join('');
+    }
+
+    function atualizarHidden() {
+      document.getElementById('tecnologias-hidden').value = JSON.stringify([...techs]);
+    }
+
+    // ═══════════════ RADIO NÍVEL ═══════════════
+    document.querySelectorAll('.nivel-option input[type=radio]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        document.querySelectorAll('.nivel-option > div').forEach(div => {
+          div.className = 'flex flex-col items-center rounded-xl border-2 border-gray-200 p-3 text-center transition-all duration-200 hover:border-blue-300';
+          div.querySelector('span:last-child').className = 'mt-1 text-sm font-medium text-gray-700';
+        });
+        const selected = radio.closest('.nivel-option').querySelector('div');
+        selected.className = 'flex flex-col items-center rounded-xl border-2 border-blue-500 bg-blue-50 p-3 text-center transition-all duration-200';
+        selected.querySelector('span:last-child').className = 'mt-1 text-sm font-medium text-blue-700';
+      });
+    });
+
+    // ═══════════════ ENVIAR ANÁLISE ═══════════════
+    async function enviarAnalise(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-analisar');
+      const textBtn = document.getElementById('texto-btn');
+      const iconSubmit = document.getElementById('icon-submit');
+
+      if (techs.size === 0) { alert('Adicione pelo menos uma tecnologia.'); return; }
+      const nivel = document.querySelector('input[name="nivel"]:checked');
+      if (!nivel) { alert('Selecione seu nível de experiência.'); return; }
+
+      btn.disabled = true;
+      iconSubmit.innerHTML = `<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" class="opacity-75"></path>`;
+      iconSubmit.setAttribute('viewBox', '0 0 24 24');
+      iconSubmit.classList.add('animate-spin');
+      textBtn.textContent = 'Analisando proposta...';
+
+      const payload = {
+        titulo: document.getElementById('titulo').value.trim(),
+        descricao: document.getElementById('descricao').value.trim(),
+        prazo_cliente: document.getElementById('prazo').value.trim(),
+        tecnologias: [...techs],
+        nivel_freelancer: nivel.value,
+        valor_hora: parseFloat(document.getElementById('valor-hora').value),
+      };
+
+      try {
+        const res = await fetch('/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Erro ao processar a análise.');
+        }
+        const data = await res.json();
+        renderizarResultado(data);
+        document.getElementById('resultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (err) {
+        mostrarErro(err.message);
+      } finally {
+        btn.disabled = false;
+        iconSubmit.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.347.347a3.001 3.001 0 00-.836 1.57l-.14.828A2 2 0 0116 20h-3.333a2 2 0 01-1.97-1.671l-.14-.828a3.001 3.001 0 00-.836-1.57L8.343 15.9z" />`;
+        iconSubmit.setAttribute('viewBox', '0 0 24 24');
+        iconSubmit.classList.remove('animate-spin');
+        textBtn.textContent = 'Analisar Proposta';
+      }
+    }
+
+    // ═══════════════ RENDERIZAR RESULTADO ═══════════════
+    function renderizarResultado(data) {
+      const r = data.resultado;
+      const container = document.getElementById('resultado');
+      const complexLabel = { baixa:'Baixa', media:'Média', alta:'Alta', muito_alta:'Muito Alta' };
+      const complexEmoji = { baixa:'🟢', media:'🟡', alta:'🟠', muito_alta:'🔴' };
+
+      container.innerHTML = `
+        <div class="mb-6 flex items-center justify-between">
+          <h2 class="text-2xl font-bold text-gray-900">Resultado da Análise</h2>
+          <span class="rounded-full px-4 py-1.5 text-sm font-semibold badge-${r.complexity}">
+            ${complexEmoji[r.complexity]} Complexidade ${complexLabel[r.complexity]}
+          </span>
+        </div>
+
+        <!-- Cards de métricas -->
+        <div class="grid gap-4 sm:grid-cols-3 mb-6">
+          <div class="card text-center">
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Estimativa de Horas</p>
+            <p class="text-3xl font-bold text-gray-900">${r.estimated_hours.min}<span class="text-lg text-gray-400">–</span>${r.estimated_hours.max}</p>
+            <p class="text-xs text-gray-400 mt-1">horas estimadas</p>
+          </div>
+          <div class="card text-center border-t-4 border-t-emerald-400">
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Valor Mínimo</p>
+            <p class="text-3xl font-bold text-emerald-600">${formatarMoeda(r.suggested_price.min)}</p>
+            <p class="text-xs text-gray-400 mt-1">BRL</p>
+          </div>
+          <div class="card text-center border-t-4 border-t-blue-400">
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Valor Máximo</p>
+            <p class="text-3xl font-bold text-blue-600">${formatarMoeda(r.suggested_price.max)}</p>
+            <p class="text-xs text-gray-400 mt-1">BRL</p>
+          </div>
+        </div>
+
+        <!-- Escopo -->
+        <div class="card mb-4">
+          <h3 class="mb-3 flex items-center gap-2 font-semibold text-gray-900">
+            <svg class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+            Resumo do Escopo
+          </h3>
+          <p class="text-sm leading-relaxed text-gray-700">${escapeHtml(r.scope_summary)}</p>
+        </div>
+
+        <!-- Grid: Riscos e Red Flags -->
+        <div class="grid gap-4 sm:grid-cols-2 mb-4">
+          <div class="card">
+            <h3 class="mb-3 flex items-center gap-2 font-semibold text-gray-900">
+              <svg class="h-5 w-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              Riscos Identificados
+            </h3>
+            <div class="space-y-2">
+              ${r.risks.length ? r.risks.map(risk => `<div class="list-item-risk"><span class="shrink-0 mt-0.5">⚠</span><span>${escapeHtml(risk)}</span></div>`).join('') : '<p class="text-sm text-gray-400">Nenhum risco identificado.</p>'}
+            </div>
+          </div>
+          <div class="card">
+            <h3 class="mb-3 flex items-center gap-2 font-semibold text-gray-900">
+              <svg class="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" /></svg>
+              Pontos de Atenção
+            </h3>
+            <div class="space-y-2">
+              ${r.red_flags.length ? r.red_flags.map(flag => `<div class="list-item-redflag"><span class="shrink-0 mt-0.5">🚩</span><span>${escapeHtml(flag)}</span></div>`).join('') : '<p class="text-sm text-gray-400">Nenhum ponto crítico identificado.</p>'}
+            </div>
+          </div>
+        </div>
+
+        <!-- Perguntas ao cliente -->
+        <div class="card mb-4">
+          <h3 class="mb-3 flex items-center gap-2 font-semibold text-gray-900">
+            <svg class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            Perguntas para o Cliente
+          </h3>
+          <div class="space-y-2">
+            ${r.questions_to_ask.map((q, i) => `<div class="list-item-question"><span class="shrink-0 font-bold text-blue-500">${i + 1}.</span><span>${escapeHtml(q)}</span></div>`).join('')}
+          </div>
+        </div>
+
+        <!-- Recomendação -->
+        <div class="card border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50 to-white">
+          <h3 class="mb-2 flex items-center gap-2 font-semibold text-gray-900">
+            <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+            Recomendação Final
+          </h3>
+          <p class="text-sm leading-relaxed text-gray-800 font-medium">${escapeHtml(r.recommendation)}</p>
+        </div>
+      `;
+      container.classList.remove('hidden');
+    }
+
+    function mostrarErro(msg) {
+      const container = document.getElementById('resultado');
+      container.innerHTML = `
+        <div class="card border-l-4 border-l-red-500 bg-red-50">
+          <div class="flex items-center gap-3">
+            <svg class="h-6 w-6 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <div>
+              <h3 class="font-semibold text-red-900">Erro ao processar análise</h3>
+              <p class="text-sm text-red-700 mt-1">${escapeHtml(msg)}</p>
+            </div>
+          </div>
+        </div>
+      `;
+      container.classList.remove('hidden');
+    }
+
+    // ═══════════════ HISTÓRICO ═══════════════
+    async function carregarHistorico() {
+      const lista = document.getElementById('lista-historico');
+      lista.innerHTML = `<div class="flex justify-center py-12"><div class="h-8 w-8 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600"></div></div>`;
+
+      const params = new URLSearchParams();
+      const complexidade = document.getElementById('filtro-complexidade')?.value;
+      const dataInicio = document.getElementById('filtro-data-inicio')?.value;
+      const dataFim = document.getElementById('filtro-data-fim')?.value;
+
+      if (complexidade) params.set('complexidade', complexidade);
+      if (dataInicio) params.set('data_inicio', new Date(dataInicio).toISOString());
+      if (dataFim) { const d = new Date(dataFim); d.setHours(23,59,59); params.set('data_fim', d.toISOString()); }
+
+      try {
+        const res = await fetch('/analyses?' + params.toString());
+        const analises = await res.json();
+
+        if (!analises.length) {
+          lista.innerHTML = `<div class="flex flex-col items-center justify-center py-16 text-gray-400"><svg class="h-12 w-12 text-gray-200 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg><p class="text-sm">Nenhuma análise encontrada para os filtros selecionados.</p></div>`;
+          return;
+        }
+
+        const complexLabel = { baixa:'Baixa', media:'Média', alta:'Alta', muito_alta:'Muito Alta' };
+        const complexEmoji = { baixa:'🟢', media:'🟡', alta:'🟠', muito_alta:'🔴' };
+        const nivelMap = { junior:'Júnior', pleno:'Pleno', senior:'Sênior' };
+
+        lista.innerHTML = analises.map(a => `
+          <div class="card hover:shadow-md transition-shadow duration-200 cursor-pointer" onclick="verDetalhe(${a.id})">
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex-1 min-w-0">
+                <h3 class="font-semibold text-gray-900 truncate">${escapeHtml(a.titulo)}</h3>
+                <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                  <span>${formatarData(a.criado_em)}</span>
+                  <span>•</span>
+                  <span>${nivelMap[a.nivel_freelancer] || a.nivel_freelancer}</span>
+                </div>
+              </div>
+              <div class="flex flex-col items-end gap-2 shrink-0">
+                <span class="rounded-full px-3 py-0.5 text-xs font-semibold badge-${a.complexidade}">
+                  ${complexEmoji[a.complexidade]} ${complexLabel[a.complexidade] || a.complexidade}
+                </span>
+                <span class="text-sm font-semibold text-gray-800">${formatarMoeda(a.preco_min)} – ${formatarMoeda(a.preco_max)}</span>
+              </div>
+            </div>
+            <div class="mt-3 flex items-center gap-4 text-xs text-gray-500 border-t border-gray-50 pt-3">
+              <span class="flex items-center gap-1">
+                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                ${a.horas_min}–${a.horas_max}h estimadas
+              </span>
+              <span class="text-blue-500 font-medium ml-auto">Ver detalhes →</span>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        lista.innerHTML = `<div class="card border-l-4 border-l-red-500 bg-red-50 text-red-700 text-sm p-4">Erro ao carregar histórico: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    async function verDetalhe(id) {
+      const overlay = document.getElementById('modal-overlay');
+      const content = document.getElementById('modal-content');
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
+      content.innerHTML = `<div class="flex justify-center p-16"><div class="h-8 w-8 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600"></div></div>`;
+
+      try {
+        const res = await fetch(`/analyses/${id}`);
+        const data = await res.json();
+        const r = data.resultado;
+        const complexLabel = { baixa:'Baixa', media:'Média', alta:'Alta', muito_alta:'Muito Alta' };
+        const complexEmoji = { baixa:'🟢', media:'🟡', alta:'🟠', muito_alta:'🔴' };
+        const nivelMap = { junior:'Júnior', pleno:'Pleno', senior:'Sênior' };
+
+        content.innerHTML = `
+          <div class="p-6">
+            <div class="flex items-start justify-between mb-6">
+              <div>
+                <h2 class="text-xl font-bold text-gray-900">${escapeHtml(data.titulo)}</h2>
+                <p class="text-sm text-gray-500 mt-1">${formatarData(data.criado_em)} · ${nivelMap[data.nivel_freelancer] || data.nivel_freelancer} · R$${data.valor_hora}/h</p>
+              </div>
+              <button onclick="fecharModal()" class="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div id="modal-resultado"></div>
+          </div>`;
+        document.getElementById('modal-resultado').innerHTML = '';
+        renderizarResultadoNoContainer(r, document.getElementById('modal-resultado'));
+      } catch (err) {
+        content.innerHTML = `<div class="p-6 text-red-600">Erro ao carregar análise: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    function renderizarResultadoNoContainer(r, container) {
+      const complexLabel = { baixa:'Baixa', media:'Média', alta:'Alta', muito_alta:'Muito Alta' };
+      const complexEmoji = { baixa:'🟢', media:'🟡', alta:'🟠', muito_alta:'🔴' };
+      container.innerHTML = `
+        <div class="mb-4 flex justify-end">
+          <span class="rounded-full px-4 py-1.5 text-sm font-semibold badge-${r.complexity}">${complexEmoji[r.complexity]} Complexidade ${complexLabel[r.complexity]}</span>
+        </div>
+        <div class="grid gap-3 sm:grid-cols-3 mb-4">
+          <div class="text-center p-3 bg-gray-50 rounded-xl">
+            <p class="text-xs text-gray-400 mb-1">Horas Estimadas</p>
+            <p class="text-2xl font-bold text-gray-900">${r.estimated_hours.min}–${r.estimated_hours.max}h</p>
+          </div>
+          <div class="text-center p-3 bg-emerald-50 rounded-xl">
+            <p class="text-xs text-gray-400 mb-1">Mínimo</p>
+            <p class="text-2xl font-bold text-emerald-600">${formatarMoeda(r.suggested_price.min)}</p>
+          </div>
+          <div class="text-center p-3 bg-blue-50 rounded-xl">
+            <p class="text-xs text-gray-400 mb-1">Máximo</p>
+            <p class="text-2xl font-bold text-blue-600">${formatarMoeda(r.suggested_price.max)}</p>
+          </div>
+        </div>
+        <div class="mb-4 p-4 bg-gray-50 rounded-xl">
+          <h4 class="text-sm font-semibold text-gray-700 mb-2">Escopo</h4>
+          <p class="text-sm text-gray-600 leading-relaxed">${escapeHtml(r.scope_summary)}</p>
+        </div>
+        <div class="grid gap-3 sm:grid-cols-2 mb-4">
+          <div class="p-4 bg-orange-50 rounded-xl">
+            <h4 class="text-sm font-semibold text-orange-800 mb-2">⚠ Riscos</h4>
+            <ul class="space-y-1">${r.risks.map(x => `<li class="text-xs text-orange-700">• ${escapeHtml(x)}</li>`).join('') || '<li class="text-xs text-gray-400">Nenhum risco</li>'}</ul>
+          </div>
+          <div class="p-4 bg-red-50 rounded-xl">
+            <h4 class="text-sm font-semibold text-red-800 mb-2">🚩 Red Flags</h4>
+            <ul class="space-y-1">${r.red_flags.map(x => `<li class="text-xs text-red-700">• ${escapeHtml(x)}</li>`).join('') || '<li class="text-xs text-gray-400">Nenhum</li>'}</ul>
+          </div>
+        </div>
+        <div class="mb-4 p-4 bg-blue-50 rounded-xl">
+          <h4 class="text-sm font-semibold text-blue-800 mb-2">💬 Perguntas para o Cliente</h4>
+          <ol class="space-y-1 list-decimal list-inside">${r.questions_to_ask.map(q => `<li class="text-xs text-blue-700">${escapeHtml(q)}</li>`).join('')}</ol>
+        </div>
+        <div class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl">
+          <h4 class="text-sm font-semibold text-blue-900 mb-2">✅ Recomendação Final</h4>
+          <p class="text-sm text-gray-800 font-medium">${escapeHtml(r.recommendation)}</p>
+        </div>
+      `;
+    }
+
+    function fecharModal() {
+      document.getElementById('modal-overlay').classList.add('hidden');
+      document.getElementById('modal-overlay').classList.remove('flex');
+    }
+
+    document.getElementById('modal-overlay').addEventListener('click', function(e) {
+      if (e.target === this) fecharModal();
+    });
+
+    // ═══════════════ UTILITÁRIOS ═══════════════
+    function formatarMoeda(valor) {
+      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(valor);
+    }
+
+    function formatarData(iso) {
+      return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.appendChild(document.createTextNode(str));
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

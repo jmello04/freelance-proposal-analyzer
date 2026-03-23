@@ -1,0 +1,48 @@
+version: '3.9'
+
+services:
+  api:
+    build: .
+    container_name: freelance_analyzer_api
+    ports:
+      - "8000:8000"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/freelance_analyzer
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app
+    restart: unless-stopped
+    networks:
+      - freelance_net
+
+  db:
+    image: postgres:16-alpine
+    container_name: freelance_analyzer_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=freelance_analyzer
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d freelance_analyzer"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - freelance_net
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  freelance_net:
+    driver: bridge

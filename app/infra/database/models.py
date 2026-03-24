@@ -1,5 +1,8 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, JSON, Text
+from __future__ import annotations
+
+from sqlalchemy import Column, DateTime, Float, Integer, JSON, String, Text
 from sqlalchemy.sql import func
+
 from app.infra.database.connection import Base
 
 
@@ -40,4 +43,8 @@ class Analise(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<Analise id={self.id} titulo='{self.titulo}' complexidade='{self.complexidade}'>"
+        return (
+            f"<Analise id={self.id} "
+            f"titulo='{self.titulo[:30]}' "
+            f"complexidade='{self.complexidade}'>"
+        )

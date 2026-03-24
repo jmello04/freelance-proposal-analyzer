@@ -1,7 +1,10 @@
-from pydantic import BaseModel, Field, field_validator
-from typing import List, Optional
+from __future__ import annotations
+
 from datetime import datetime
 from enum import Enum
+from typing import Annotated, List, Optional
+
+from pydantic import BaseModel, Field, field_validator
 
 
 class NivelFreelancer(str, Enum):
@@ -17,24 +20,36 @@ class Complexidade(str, Enum):
     MUITO_ALTA = "muito_alta"
 
 
+TituloStr = Annotated[str, Field(min_length=5, max_length=200)]
+DescricaoStr = Annotated[str, Field(min_length=20)]
+ValorHoraFloat = Annotated[float, Field(gt=0, le=10_000)]
+
+
 class EntradaProposta(BaseModel):
-    titulo: str = Field(..., min_length=5, max_length=200, description="Título do projeto")
-    descricao: str = Field(..., min_length=20, description="Descrição completa do projeto")
-    prazo_cliente: str = Field(..., description="Prazo informado pelo cliente")
-    tecnologias: List[str] = Field(..., min_length=1, description="Tecnologias mencionadas")
-    nivel_freelancer: NivelFreelancer = Field(..., description="Nível de experiência do freelancer")
-    valor_hora: float = Field(..., gt=0, description="Valor hora pretendido em BRL")
+    titulo: TituloStr = Field(..., description="Título do projeto")
+    descricao: DescricaoStr = Field(..., description="Descrição completa do que o cliente quer")
+    prazo_cliente: str = Field(..., min_length=2, max_length=100, description="Prazo informado pelo cliente")
+    tecnologias: List[str] = Field(..., description="Tecnologias mencionadas pelo cliente")
+    nivel_freelancer: NivelFreelancer = Field(..., description="Nível de experiência: junior, pleno ou senior")
+    valor_hora: ValorHoraFloat = Field(..., description="Valor hora pretendido em BRL")
 
     @field_validator("tecnologias")
     @classmethod
     def validar_tecnologias(cls, v: List[str]) -> List[str]:
-        return [t.strip() for t in v if t.strip()]
+        limpo = [t.strip() for t in v if t.strip()]
+        if not limpo:
+            raise ValueError("Informe ao menos uma tecnologia.")
+        return limpo
 
     model_config = {
         "json_schema_extra": {
             "example": {
                 "titulo": "Plataforma de E-commerce Completa",
-                "descricao": "Preciso de uma loja virtual com carrinho de compras, checkout com Pix e cartão de crédito via Stripe, painel administrativo para gestão de produtos e pedidos, integração com Correios para frete e emissão de nota fiscal.",
+                "descricao": (
+                    "Preciso de uma loja virtual com carrinho de compras, checkout via Pix e cartão "
+                    "de crédito (Stripe), painel administrativo para gestão de produtos e pedidos, "
+                    "integração com Correios para cálculo de frete e emissão de nota fiscal eletrônica."
+                ),
                 "prazo_cliente": "3 meses",
                 "tecnologias": ["Python", "Django", "React", "PostgreSQL", "Redis"],
                 "nivel_freelancer": "pleno",
@@ -45,25 +60,25 @@ class EntradaProposta(BaseModel):
 
 
 class HorasEstimadas(BaseModel):
-    min: int = Field(..., ge=1)
-    max: int = Field(..., ge=1)
+    min: int = Field(..., ge=1, description="Estimativa otimista em horas")
+    max: int = Field(..., ge=1, description="Estimativa realista em horas")
 
 
 class PrecoSugerido(BaseModel):
-    min: float = Field(..., ge=0)
-    max: float = Field(..., ge=0)
+    min: float = Field(..., ge=0, description="Valor mínimo sugerido")
+    max: float = Field(..., ge=0, description="Valor máximo sugerido")
     currency: str = Field(default="BRL")
 
 
 class ResultadoAnalise(BaseModel):
-    scope_summary: str
+    scope_summary: str = Field(..., description="Resumo claro do que foi pedido")
     estimated_hours: HorasEstimadas
     suggested_price: PrecoSugerido
     complexity: Complexidade
-    risks: List[str]
-    red_flags: List[str]
-    questions_to_ask: List[str]
-    recommendation: str
+    risks: List[str] = Field(..., description="Riscos identificados no projeto")
+    red_flags: List[str] = Field(..., description="Pontos de atenção críticos")
+    questions_to_ask: List[str] = Field(..., description="Perguntas a fazer ao cliente")
+    recommendation: str = Field(..., description="Recomendação final: aceitar, negociar ou recusar")
 
 
 class RespostaAnalise(BaseModel):
@@ -91,9 +106,6 @@ class ItemListaAnalise(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class FiltrosAnalise(BaseModel):
-    complexidade: Optional[Complexidade] = None
-    data_inicio: Optional[datetime] = None
-    data_fim: Optional[datetime] = None
-    limite: int = Field(default=20, ge=1, le=100)
-    pagina: int = Field(default=1, ge=1)
+class RespostaErro(BaseModel):
+    detail: str
+    codigo: Optional[str] = None

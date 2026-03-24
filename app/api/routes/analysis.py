@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Optional
 
 import anthropic
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -91,21 +90,24 @@ async def analisar_proposta(
         resultado = await obter_analisador().analisar(entrada)
     except anthropic.AuthenticationError:
         await db.rollback()
-        raise ChaveApiInvalidaError()
+        raise ChaveApiInvalidaError() from None
     except anthropic.RateLimitError:
         await db.rollback()
-        raise ServicoIndisponivelError("limite de requisições atingido. Tente novamente em instantes.")
+        msg = "limite de requisições atingido. Tente novamente em instantes."
+        raise ServicoIndisponivelError(msg) from None
     except (anthropic.APIStatusError, anthropic.APIConnectionError) as exc:
         await db.rollback()
         logger.error("Falha na comunicação com serviço externo: %s", exc)
-        raise ServicoIndisponivelError("falha de comunicação com serviço externo.")
+        raise ServicoIndisponivelError("falha de comunicação com serviço externo.") from exc
     except ValueError as exc:
         await db.rollback()
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+        ) from exc
     except Exception as exc:
         await db.rollback()
         logger.error("Erro inesperado durante análise: %s", exc, exc_info=True)
-        raise ServicoIndisponivelError("erro interno inesperado.")
+        raise ServicoIndisponivelError("erro interno inesperado.") from exc
 
     analise = await repo.salvar_resultado(registro, resultado)
     return _para_schema(analise)
@@ -121,9 +123,9 @@ async def analisar_proposta(
     ),
 )
 async def listar_analises(
-    complexidade: Optional[Complexidade] = Query(None, description="Filtrar por complexidade"),
-    data_inicio: Optional[datetime] = Query(None, description="Data de início — ISO 8601"),
-    data_fim: Optional[datetime] = Query(None, description="Data de fim — ISO 8601"),
+    complexidade: Complexidade | None = Query(None, description="Filtrar por complexidade"),
+    data_inicio: datetime | None = Query(None, description="Data de início — ISO 8601"),
+    data_fim: datetime | None = Query(None, description="Data de fim — ISO 8601"),
     limite: int = Query(20, ge=1, le=100, description="Itens por página"),
     pagina: int = Query(1, ge=1, description="Número da página"),
     db: AsyncSession = Depends(get_db),

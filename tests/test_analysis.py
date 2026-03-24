@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 PATCH_ANALISAR = "app.api.routes.analysis.obter_analisador"
 
@@ -45,7 +46,9 @@ async def test_analisar_proposta_sucesso(cliente_http, proposta_exemplo, resulta
 
 
 @pytest.mark.asyncio
-async def test_analisar_proposta_persistida_no_banco(cliente_http, proposta_exemplo, resultado_mock):
+async def test_analisar_proposta_persistida_no_banco(
+    cliente_http, proposta_exemplo, resultado_mock
+):
     with patch(PATCH_ANALISAR, return_value=_mock_analisador(resultado_mock)):
         post = await cliente_http.post("/analyze", json=proposta_exemplo)
 

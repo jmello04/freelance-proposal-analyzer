@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import List, Optional, Tuple
 
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -58,7 +57,7 @@ class AnaliseRepository:
         )
         return analise
 
-    async def buscar_por_id(self, analise_id: int) -> Optional[Analise]:
+    async def buscar_por_id(self, analise_id: int) -> Analise | None:
         result = await self._session.execute(
             select(Analise).where(Analise.id == analise_id)
         )
@@ -66,12 +65,12 @@ class AnaliseRepository:
 
     async def listar(
         self,
-        complexidade: Optional[Complexidade] = None,
-        data_inicio: Optional[datetime] = None,
-        data_fim: Optional[datetime] = None,
+        complexidade: Complexidade | None = None,
+        data_inicio: datetime | None = None,
+        data_fim: datetime | None = None,
         limite: int = 20,
         offset: int = 0,
-    ) -> Tuple[List[Analise], int]:
+    ) -> tuple[list[Analise], int]:
         where = self._montar_where(complexidade, data_inicio, data_fim)
 
         total = await self._contar(where)
@@ -115,9 +114,9 @@ class AnaliseRepository:
 
     def _montar_where(
         self,
-        complexidade: Optional[Complexidade],
-        data_inicio: Optional[datetime],
-        data_fim: Optional[datetime],
+        complexidade: Complexidade | None,
+        data_inicio: datetime | None,
+        data_fim: datetime | None,
     ):
         filtros = []
         if complexidade:
@@ -134,7 +133,7 @@ class AnaliseRepository:
         )
         return result.scalar() or 0
 
-    async def _buscar_pagina(self, where, limite: int, offset: int) -> List[Analise]:
+    async def _buscar_pagina(self, where, limite: int, offset: int) -> list[Analise]:
         result = await self._session.execute(
             select(Analise)
             .where(where)

@@ -63,7 +63,8 @@ INSTRUÇÕES:
 6. Red flags são situações que podem gerar conflito ou prejuízo: escopo aberto, \
 prazo irreal, orçamento inconsistente, requisitos contraditórios.
 7. Formule perguntas que esclarecem ambiguidades antes de fechar o contrato.
-8. A recomendação deve ser objetiva: ACEITAR, NEGOCIAR (com condições claras) ou RECUSAR (com motivo).
+8. A recomendação deve ser objetiva: ACEITAR, NEGOCIAR (com condições claras) \
+ou RECUSAR (com motivo).
 
 Retorne EXCLUSIVAMENTE um objeto JSON válido, sem markdown, sem texto adicional:
 

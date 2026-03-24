@@ -1,23 +1,23 @@
 from __future__ import annotations
 
 import os
+
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
-from unittest.mock import AsyncMock, patch
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
 os.environ.setdefault("ANTHROPIC_API_KEY", "test-key-placeholder")
 
-from app.main import app  # noqa: E402 (após setar env)
-from app.infra.database.connection import Base, get_db
 from app.core.schemas import (
     Complexidade,
     HorasEstimadas,
     PrecoSugerido,
     ResultadoAnalise,
 )
+from app.infra.database.connection import Base, get_db
+from app.main import app  # noqa: E402 (após setar env)
 
 DATABASE_URL_TESTE = "sqlite+aiosqlite:///:memory:"
 
@@ -77,7 +77,8 @@ def proposta_exemplo() -> dict:
             "O sistema deve ter cadastro de pacientes, médicos e especialidades. "
             "Precisa de agenda visual com calendário, confirmação automática por WhatsApp "
             "e e-mail, prontuário eletrônico básico, relatórios mensais de atendimentos "
-            "e painel administrativo com controle de acesso por perfil (admin, médico, recepcionista)."
+            "e painel administrativo com controle de acesso por perfil "
+            "(admin, médico, recepcionista)."
         ),
         "prazo_cliente": "2 meses",
         "tecnologias": ["Python", "FastAPI", "React", "PostgreSQL"],

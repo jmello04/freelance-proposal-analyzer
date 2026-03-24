@@ -2,19 +2,19 @@ from __future__ import annotations
 
 import math
 from datetime import datetime
-from enum import Enum
-from typing import Annotated, Dict, List, Optional
+from enum import StrEnum
+from typing import Annotated
 
 from pydantic import BaseModel, Field, field_validator
 
 
-class NivelFreelancer(str, Enum):
+class NivelFreelancer(StrEnum):
     JUNIOR = "junior"
     PLENO = "pleno"
     SENIOR = "senior"
 
 
-class Complexidade(str, Enum):
+class Complexidade(StrEnum):
     BAIXA = "baixa"
     MEDIA = "media"
     ALTA = "alta"
@@ -31,14 +31,18 @@ ValorHoraFloat = Annotated[float, Field(gt=0, le=10_000)]
 class EntradaProposta(BaseModel):
     titulo: TituloStr = Field(..., description="Título do projeto")
     descricao: DescricaoStr = Field(..., description="Descrição completa do que o cliente quer")
-    prazo_cliente: str = Field(..., min_length=2, max_length=100, description="Prazo informado pelo cliente")
-    tecnologias: List[str] = Field(..., description="Tecnologias mencionadas pelo cliente")
-    nivel_freelancer: NivelFreelancer = Field(..., description="Nível de experiência: junior, pleno ou senior")
+    prazo_cliente: str = Field(
+        ..., min_length=2, max_length=100, description="Prazo informado pelo cliente"
+    )
+    tecnologias: list[str] = Field(..., description="Tecnologias mencionadas pelo cliente")
+    nivel_freelancer: NivelFreelancer = Field(
+        ..., description="Nível de experiência: junior, pleno ou senior"
+    )
     valor_hora: ValorHoraFloat = Field(..., description="Valor hora pretendido em BRL")
 
     @field_validator("tecnologias")
     @classmethod
-    def validar_tecnologias(cls, v: List[str]) -> List[str]:
+    def validar_tecnologias(cls, v: list[str]) -> list[str]:
         limpo = [t.strip() for t in v if t.strip()]
         if not limpo:
             raise ValueError("Informe ao menos uma tecnologia.")
@@ -49,9 +53,9 @@ class EntradaProposta(BaseModel):
             "example": {
                 "titulo": "Plataforma de E-commerce Completa",
                 "descricao": (
-                    "Preciso de uma loja virtual com carrinho de compras, checkout via Pix e cartão "
-                    "de crédito (Stripe), painel administrativo para gestão de produtos e pedidos, "
-                    "integração com Correios para cálculo de frete e emissão de nota fiscal eletrônica."
+                    "Preciso de uma loja virtual com carrinho de compras, checkout via Pix e "
+                    "cartão de crédito (Stripe), painel administrativo para gestão de produtos "
+                    "e pedidos, integração com Correios para frete e emissão de nota fiscal."
                 ),
                 "prazo_cliente": "3 meses",
                 "tecnologias": ["Python", "Django", "React", "PostgreSQL", "Redis"],
@@ -80,9 +84,11 @@ class ResultadoAnalise(BaseModel):
     estimated_hours: HorasEstimadas
     suggested_price: PrecoSugerido
     complexity: Complexidade
-    risks: List[str] = Field(..., description="Riscos identificados no projeto")
-    red_flags: List[str] = Field(..., description="Pontos de atenção críticos")
-    questions_to_ask: List[str] = Field(..., description="Perguntas a fazer ao cliente antes de fechar")
+    risks: list[str] = Field(..., description="Riscos identificados no projeto")
+    red_flags: list[str] = Field(..., description="Pontos de atenção críticos")
+    questions_to_ask: list[str] = Field(
+        ..., description="Perguntas a fazer ao cliente antes de fechar"
+    )
     recommendation: str = Field(..., description="Recomendação final: ACEITAR, NEGOCIAR ou RECUSAR")
 
 
@@ -118,18 +124,20 @@ class PaginaResposta(BaseModel):
     pagina: int = Field(..., description="Página atual")
     limite: int = Field(..., description="Itens por página")
     total_paginas: int = Field(..., description="Total de páginas disponíveis")
-    itens: List[ItemListaAnalise]
+    itens: list[ItemListaAnalise]
 
     @classmethod
     def montar(
         cls,
-        itens: List[ItemListaAnalise],
+        itens: list[ItemListaAnalise],
         total: int,
         pagina: int,
         limite: int,
-    ) -> "PaginaResposta":
+    ) -> PaginaResposta:
         total_paginas = math.ceil(total / limite) if total and limite else 0
-        return cls(total=total, pagina=pagina, limite=limite, total_paginas=total_paginas, itens=itens)
+        return cls(
+            total=total, pagina=pagina, limite=limite, total_paginas=total_paginas, itens=itens
+        )
 
 
 # ── Estatísticas ──────────────────────────────────────────────
@@ -149,11 +157,11 @@ class EstatisticasAnalise(BaseModel):
     total_analises: int
     preco_medio: PrecoMedioStats
     horas_medias: HorasMediasStats
-    por_complexidade: Dict[str, int]
+    por_complexidade: dict[str, int]
 
 
 # ── Erros ─────────────────────────────────────────────────────
 
 class RespostaErro(BaseModel):
     detail: str
-    codigo: Optional[str] = None
+    codigo: str | None = None

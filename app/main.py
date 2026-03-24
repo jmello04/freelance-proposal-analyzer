@@ -1,40 +1,49 @@
 from __future__ import annotations
 
-import logging
 import os
+import uuid
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.api.routes.analysis import router as analysis_router
 from app.core.config import settings
+from app.core.logging import configurar_logging
 from app.infra.database.connection import init_db
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+configurar_logging(settings.LOG_LEVEL)
+
+import logging  # noqa: E402 (após configurar_logging)
+
 logger = logging.getLogger(__name__)
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 INDEX_HTML = os.path.join(STATIC_DIR, "index.html")
 
 
+class RequestIDMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())[:8]
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = request_id
+        return response
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Iniciando %s v%s...", settings.APP_NAME, settings.APP_VERSION)
+    logger.info("Iniciando %s v%s", settings.APP_NAME, settings.APP_VERSION)
     try:
         await init_db()
-        logger.info("Aplicação pronta.")
+        logger.info("Banco de dados pronto.")
     except Exception as exc:
         logger.critical("Falha crítica na inicialização: %s", exc)
         raise
     yield
-    logger.info("Encerrando aplicação.")
+    logger.info("Encerrando %s.", settings.APP_NAME)
 
 
 app = FastAPI(
@@ -44,14 +53,17 @@ app = FastAPI(
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
+    contact={"name": "jmello04", "url": "https://github.com/jmello04"},
+    license_info={"name": "MIT"},
 )
 
+app.add_middleware(RequestIDMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=False,
     allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type", "Accept"],
+    allow_headers=["Content-Type", "Accept", "X-Request-ID"],
 )
 
 app.include_router(analysis_router)
@@ -70,14 +82,25 @@ async def servir_frontend() -> FileResponse:
     return FileResponse(INDEX_HTML)
 
 
-@app.get("/health", tags=["Sistema"], summary="Verificação de saúde da aplicação")
+@app.get("/health", tags=["Sistema"], summary="Verificação de saúde")
 async def health_check() -> dict:
-    return {"status": "ok", "versao": settings.APP_VERSION, "app": settings.APP_NAME}
+    return {
+        "status": "ok",
+        "app": settings.APP_NAME,
+        "versao": settings.APP_VERSION,
+    }
 
 
 @app.exception_handler(Exception)
 async def handler_erro_generico(request: Request, exc: Exception) -> JSONResponse:
-    logger.error("Erro não tratado em %s %s: %s", request.method, request.url.path, exc, exc_info=True)
+    logger.error(
+        "Erro não tratado | %s %s | %s: %s",
+        request.method,
+        request.url.path,
+        type(exc).__name__,
+        exc,
+        exc_info=True,
+    )
     return JSONResponse(
         status_code=500,
         content={"detail": "Erro interno do servidor. Tente novamente."},

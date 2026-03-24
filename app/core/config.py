@@ -18,5 +18,7 @@ class Settings(BaseSettings):
     ANALYSIS_MODEL: str = "claude-sonnet-4-6"
     ANALYSIS_MAX_TOKENS: int = 2048
 
+    LOG_LEVEL: str = "INFO"
+
 
 settings = Settings()

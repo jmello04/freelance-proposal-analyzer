@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "freelance-proposal-analyzer"
+version = "1.0.0"
+description = "Análise técnica avançada de propostas freelance"
+requires-python = ">=3.12"
+readme = "README.md"
+license = { text = "MIT" }
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "A", "C4", "RET", "SIM"]
+ignore = [
+    "B008",   # FastAPI depende de chamadas em parâmetros de função
+    "A002",   # shadowing builtins aceitável em contexto de schema
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+log_cli = true
+log_cli_level = "WARNING"

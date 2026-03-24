@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import math
 from datetime import datetime
 from enum import Enum
-from typing import Annotated, List, Optional
+from typing import Annotated, Dict, List, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -24,6 +25,8 @@ TituloStr = Annotated[str, Field(min_length=5, max_length=200)]
 DescricaoStr = Annotated[str, Field(min_length=20)]
 ValorHoraFloat = Annotated[float, Field(gt=0, le=10_000)]
 
+
+# ── Entrada ───────────────────────────────────────────────────
 
 class EntradaProposta(BaseModel):
     titulo: TituloStr = Field(..., description="Título do projeto")
@@ -59,6 +62,8 @@ class EntradaProposta(BaseModel):
     }
 
 
+# ── Resultado de Análise ──────────────────────────────────────
+
 class HorasEstimadas(BaseModel):
     min: int = Field(..., ge=1, description="Estimativa otimista em horas")
     max: int = Field(..., ge=1, description="Estimativa realista em horas")
@@ -71,15 +76,17 @@ class PrecoSugerido(BaseModel):
 
 
 class ResultadoAnalise(BaseModel):
-    scope_summary: str = Field(..., description="Resumo claro do que foi pedido")
+    scope_summary: str = Field(..., description="Resumo claro do escopo identificado")
     estimated_hours: HorasEstimadas
     suggested_price: PrecoSugerido
     complexity: Complexidade
     risks: List[str] = Field(..., description="Riscos identificados no projeto")
     red_flags: List[str] = Field(..., description="Pontos de atenção críticos")
-    questions_to_ask: List[str] = Field(..., description="Perguntas a fazer ao cliente")
-    recommendation: str = Field(..., description="Recomendação final: aceitar, negociar ou recusar")
+    questions_to_ask: List[str] = Field(..., description="Perguntas a fazer ao cliente antes de fechar")
+    recommendation: str = Field(..., description="Recomendação final: ACEITAR, NEGOCIAR ou RECUSAR")
 
+
+# ── Respostas da API ──────────────────────────────────────────
 
 class RespostaAnalise(BaseModel):
     id: int
@@ -105,6 +112,47 @@ class ItemListaAnalise(BaseModel):
 
     model_config = {"from_attributes": True}
 
+
+class PaginaResposta(BaseModel):
+    total: int = Field(..., description="Total de registros encontrados")
+    pagina: int = Field(..., description="Página atual")
+    limite: int = Field(..., description="Itens por página")
+    total_paginas: int = Field(..., description="Total de páginas disponíveis")
+    itens: List[ItemListaAnalise]
+
+    @classmethod
+    def montar(
+        cls,
+        itens: List[ItemListaAnalise],
+        total: int,
+        pagina: int,
+        limite: int,
+    ) -> "PaginaResposta":
+        total_paginas = math.ceil(total / limite) if total and limite else 0
+        return cls(total=total, pagina=pagina, limite=limite, total_paginas=total_paginas, itens=itens)
+
+
+# ── Estatísticas ──────────────────────────────────────────────
+
+class PrecoMedioStats(BaseModel):
+    min: float
+    max: float
+    currency: str = "BRL"
+
+
+class HorasMediasStats(BaseModel):
+    min: float
+    max: float
+
+
+class EstatisticasAnalise(BaseModel):
+    total_analises: int
+    preco_medio: PrecoMedioStats
+    horas_medias: HorasMediasStats
+    por_complexidade: Dict[str, int]
+
+
+# ── Erros ─────────────────────────────────────────────────────
 
 class RespostaErro(BaseModel):
     detail: str

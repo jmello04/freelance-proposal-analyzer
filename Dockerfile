@@ -1,31 +1,61 @@
-FROM python:3.12-slim AS base
+# ── build stage ──────────────────────────────────────────────────────────────
+FROM python:3.12-slim AS builder
 
-WORKDIR /app
+WORKDIR /build
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends gcc libpq-dev curl \
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
-# ─────────────────────────────────────────────────────────────
-# Estágio de desenvolvimento
-# ─────────────────────────────────────────────────────────────
-FROM base AS development
+# ── development stage ─────────────────────────────────────────────────────────
+FROM python:3.12-slim AS development
 
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /install /usr/local
 COPY . .
 
 EXPOSE 8000
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
-# ─────────────────────────────────────────────────────────────
-# Estágio de produção
-# ─────────────────────────────────────────────────────────────
-FROM base AS production
+# ── production stage ──────────────────────────────────────────────────────────
+FROM python:3.12-slim AS production
 
-COPY . .
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && addgroup --system appgroup \
+    && adduser --system --ingroup appgroup appuser
+
+COPY --from=builder /install /usr/local
+COPY --chown=appuser:appgroup . .
+
+USER appuser
 
 EXPOSE 8000
 
